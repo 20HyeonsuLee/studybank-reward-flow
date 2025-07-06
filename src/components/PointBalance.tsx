@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { TrendingUp, Plus, Minus } from 'lucide-react';
+import PointChargeDialog from './PointChargeDialog';
 
 const PointBalance = () => {
   return (
@@ -15,10 +16,12 @@ const PointBalance = () => {
       </div>
       
       <div className="flex space-x-3">
-        <button className="flex-1 bg-white/20 hover:bg-white/30 transition-colors rounded-lg py-2 px-4 flex items-center justify-center space-x-2">
-          <Plus className="w-4 h-4" />
-          <span className="text-sm font-medium">충전</span>
-        </button>
+        <PointChargeDialog>
+          <button className="flex-1 bg-white/20 hover:bg-white/30 transition-colors rounded-lg py-2 px-4 flex items-center justify-center space-x-2">
+            <Plus className="w-4 h-4" />
+            <span className="text-sm font-medium">충전</span>
+          </button>
+        </PointChargeDialog>
         <button className="flex-1 bg-white/20 hover:bg-white/30 transition-colors rounded-lg py-2 px-4 flex items-center justify-center space-x-2">
           <Minus className="w-4 h-4" />
           <span className="text-sm font-medium">환불</span>

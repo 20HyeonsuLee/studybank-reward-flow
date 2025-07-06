@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '../components/Header';
 import PointBalance from '../components/PointBalance';
@@ -6,6 +5,8 @@ import QuickStats from '../components/QuickStats';
 import StudyCard from '../components/StudyCard';
 import MissionCard from '../components/MissionCard';
 import RecentActivity from '../components/RecentActivity';
+import { Button } from '@/components/ui/button';
+import { CheckSquare, Video } from 'lucide-react';
 
 const Index = () => {
   const mockStudies = [
@@ -67,6 +68,18 @@ const Index = () => {
       <Header />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* 빠른 액세스 버튼 */}
+        <div className="flex gap-4 mb-8">
+          <Button onClick={() => window.location.href = '/study-management'} className="flex items-center gap-2">
+            <CheckSquare className="w-4 h-4" />
+            스터디 관리
+          </Button>
+          <Button onClick={() => window.location.href = '/mogakco'} className="flex items-center gap-2">
+            <Video className="w-4 h-4" />
+            모각공 참여
+          </Button>
+        </div>
+
         {/* 상단 영역 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-1">
