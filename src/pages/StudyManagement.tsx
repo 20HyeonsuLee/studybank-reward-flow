@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Users, Calendar, DollarSign, CheckSquare, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Users, Calendar, DollarSign, CheckSquare, Clock, UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Study {
@@ -19,6 +20,14 @@ interface Study {
   status: 'active' | 'completed';
   attendanceRecords: Record<string, boolean[]>;
   sessionDates: string[];
+  pendingApplications: PendingApplication[];
+}
+
+interface PendingApplication {
+  id: string;
+  applicantName: string;
+  applicationDate: string;
+  message: string;
 }
 
 const StudyManagement = () => {
@@ -37,7 +46,21 @@ const StudyManagement = () => {
         '박민수': [false, true, true, true, true, true],
         '정지은': [true, false, true, true, true, true],
       },
-      sessionDates: ['2024-07-01', '2024-07-08', '2024-07-15', '2024-07-22', '2024-07-29', '2024-08-05']
+      sessionDates: ['2024-07-01', '2024-07-08', '2024-07-15', '2024-07-22', '2024-07-29', '2024-08-05'],
+      pendingApplications: [
+        {
+          id: '1',
+          applicantName: '최민호',
+          applicationDate: '2024-07-06',
+          message: '리액트를 깊이 배우고 싶어서 신청합니다. 꾸준히 참여하겠습니다!'
+        },
+        {
+          id: '2',
+          applicantName: '강유진',
+          applicationDate: '2024-07-05',
+          message: '프론트엔드 개발자로 취업 준비 중입니다. 함께 공부하고 싶습니다.'
+        }
+      ]
     }
   ]);
 
@@ -50,6 +73,7 @@ const StudyManagement = () => {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedStudy, setSelectedStudy] = useState<Study | null>(null);
+  const [showApplications, setShowApplications] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleCreateStudy = () => {
@@ -73,7 +97,8 @@ const StudyManagement = () => {
       depositAmount: parseInt(newStudyForm.depositAmount),
       status: 'active',
       attendanceRecords: {},
-      sessionDates: []
+      sessionDates: [],
+      pendingApplications: []
     };
 
     participants.forEach(participant => {
@@ -87,6 +112,49 @@ const StudyManagement = () => {
     toast({
       title: "스터디 생성 완료",
       description: `${newStudyForm.title} 스터디가 생성되었습니다.`,
+    });
+  };
+
+  const approveApplication = (studyId: string, applicationId: string, applicantName: string) => {
+    setStudies(studies.map(study => {
+      if (study.id === studyId) {
+        const updatedApplications = study.pendingApplications.filter(app => app.id !== applicationId);
+        const updatedParticipants = [...study.participants, applicantName];
+        const updatedAttendanceRecords = { ...study.attendanceRecords };
+        updatedAttendanceRecords[applicantName] = new Array(study.totalSessions).fill(false);
+        
+        return {
+          ...study,
+          participants: updatedParticipants,
+          pendingApplications: updatedApplications,
+          attendanceRecords: updatedAttendanceRecords
+        };
+      }
+      return study;
+    }));
+
+    toast({
+      title: "신청 승인 완료",
+      description: `${applicantName}님의 참여 신청이 승인되었습니다.`,
+    });
+  };
+
+  const rejectApplication = (studyId: string, applicationId: string, applicantName: string) => {
+    setStudies(studies.map(study => {
+      if (study.id === studyId) {
+        const updatedApplications = study.pendingApplications.filter(app => app.id !== applicationId);
+        return {
+          ...study,
+          pendingApplications: updatedApplications
+        };
+      }
+      return study;
+    }));
+
+    toast({
+      title: "신청 거절 완료",
+      description: `${applicantName}님의 참여 신청이 거절되었습니다.`,
+      variant: "destructive",
     });
   };
 
@@ -106,7 +174,7 @@ const StudyManagement = () => {
       const attendanceRecord = study.attendanceRecords[participant] || [];
       const attendedSessions = attendanceRecord.filter(Boolean).length;
       const missedSessions = study.totalSessions - attendedSessions;
-      const penalty = missedSessions * 10000; // 결석 1회당 10,000원 벌금
+      const penalty = missedSessions * 10000;
       const refund = study.depositAmount - penalty;
       
       return {
@@ -144,7 +212,7 @@ const StudyManagement = () => {
       if (study.id === studyId && study.currentSession < study.totalSessions) {
         const newSession = study.currentSession + 1;
         const newDate = new Date();
-        newDate.setDate(newDate.getDate() + 7); // 다음 주
+        newDate.setDate(newDate.getDate() + 7);
         
         const updatedAttendance = { ...study.attendanceRecords };
         study.participants.forEach(participant => {
@@ -250,9 +318,24 @@ const StudyManagement = () => {
                     }`}>
                       {study.status === 'active' ? '진행중' : '완료'}
                     </span>
+                    {study.pendingApplications.length > 0 && (
+                      <Badge variant="destructive" className="text-xs">
+                        신청 {study.pendingApplications.length}건
+                      </Badge>
+                    )}
                   </CardTitle>
                   
                   <div className="flex gap-2">
+                    {study.pendingApplications.length > 0 && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowApplications(showApplications === study.id ? null : study.id)}
+                      >
+                        <UserCheck className="w-4 h-4 mr-2" />
+                        신청 관리 ({study.pendingApplications.length})
+                      </Button>
+                    )}
+                    
                     {study.status === 'active' && study.currentSession < study.totalSessions && (
                       <Button
                         variant="outline"
@@ -301,6 +384,51 @@ const StudyManagement = () => {
                 </div>
               </CardHeader>
               
+              {/* 신청자 관리 섹션 */}
+              {showApplications === study.id && study.pendingApplications.length > 0 && (
+                <CardContent>
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">참여 신청 관리</h4>
+                    
+                    <div className="space-y-3">
+                      {study.pendingApplications.map(application => (
+                        <div key={application.id} className="border rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h5 className="font-medium">{application.applicantName}</h5>
+                              <p className="text-sm text-gray-500">
+                                신청일: {new Date(application.applicationDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => approveApplication(study.id, application.id, application.applicantName)}
+                              >
+                                <UserCheck className="w-4 h-4 mr-1" />
+                                승인
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => rejectApplication(study.id, application.id, application.applicantName)}
+                              >
+                                <UserX className="w-4 h-4 mr-1" />
+                                거절
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-700 bg-white p-2 rounded border">
+                            {application.message}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              )}
+              
+              {/* 기존 출석 관리 섹션 */}
               {selectedStudy?.id === study.id && (
                 <CardContent>
                   <div className="space-y-4">
