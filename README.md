@@ -1,73 +1,141 @@
-# Welcome to your Lovable project
+# 💸 StudyBank  
+**스터디 출석 정산 자동화 + 실시간 모각공 협업 + 포인트 리워드 시스템**  
+> 스터디 시작 시 예치금을 설정하고, 출석체크만으로 **자동 정산!**  
+> 모각공 목표 등록과 달성률 기반 **실시간 리워드 보상 시스템**  
+> 실시간 화상·채팅·화면 공유까지 지원하는 **Mock 기반 프로토타입 서비스**
 
-## Project info
+---
 
-**URL**: https://lovable.dev/projects/a8883120-b626-48fe-b2aa-c0ccf2731afc
+## ✅ 서비스 개요
 
-## How can I edit this code?
+**StudyBank**는 사용자들이 자율적으로 생성한 스터디와 모각공 방에 참여하고,  
+**예치금 기반 출석 정산**, **실시간 협업**, **목표 달성률 기반 리워드**,  
+**포인트 충전·환급 시스템**까지 통합적으로 제공하는 동기부여 중심 서비스입니다.
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## 👤 사용자 정의
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a8883120-b626-48fe-b2aa-c0ccf2731afc) and start prompting.
+> 출석 기반 스터디를 자율적으로 운영하고 싶은 사용자  
+> 정산이 복잡하지 않고 공정하게 관리되길 원하는 사용자  
+> 실시간으로 같이 공부하면서 목표에 따른 보상을 받고 싶은 사용자
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 🧍‍♀️ 페르소나
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 🧑‍💻 박진우 (27세, 취준생, 경기도 수원시 거주)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- 매주 자발적 스터디에 참여하지만 출석 벌금 정산이 번거로움  
+- 모각공도 중간에 흐지부지되는 경우 많음  
+- 공정하게 참여자 관리, 실시간 협업, 성과 기반 보상이 있는 시스템을 원함
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🎯 사용자 목표
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- 스터디를 **생성하고 회차별 출석을 관리**하고 싶다  
+- 출석 결과에 따라 **자동으로 정산되길 원한다**  
+- 스터디 종료 시 **내가 환급받을 금액이 자동 계산**되길 바란다  
+- 모각공은 **실시간 채팅/화상/화면공유**로 협업하고 싶다  
+- 모각공에서 **참여자들이 각자 미션을 등록하고**, **달성률로 순위가 매겨져 보상**이 주어지면 좋겠다  
+- **포인트를 충전/환급**할 수 있어야 하며, 예치금과 리워드로 활용 가능해야 한다
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 📘 사용자 시나리오
 
-**Edit a file directly in GitHub**
+### ✅ 스터디 기능 흐름
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. 사용자가 `스터디 생성` → 제목, 인원 수, 회차 수, 예치금 설정  
+2. 참가자는 스터디 검색 후 참여 신청  
+3. 관리자가 신청을 승인하면 예치금 납부 및 스터디 시작  
+4. 각 회차마다 출석 체크 (출석/지각/결석)  
+5. 출석률에 따라 예치금 차감 → 차감 금액은 모아져 정산됨  
+6. `스터디 종료` 버튼 클릭 시, 자동으로 정산되어  
+   - 출석률 높은 사람은 금액 환급  
+   - 결석 많은 사람은 예치금 손실  
+7. 관리자는 스터디 현황에서 참여자 리스트, 출석률, 차감 금액 확인 가능  
 
-**Use GitHub Codespaces**
+### ✅ 모각공 기능 흐름
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. 사용자가 `모각공 방 생성` → 제목, 인원, 시작 시간 설정  
+2. 다른 사용자는 `모각공 목록`에서 참여  
+3. 모각공 방 안에서 실시간
+   - 캠 켜기 / 화면 공유 / 채팅 가능  
+   - 각자 미션 등록 (ex. "30문제 풀기", "기출 2회독")  
+4. 모각공 종료 시 `종료 버튼` 클릭 →  
+   - 각자 자신의 미션 달성률 입력  
+   - 시스템이 **달성률 기반으로 순위 결정**  
+   - 1등에게 포인트 리워드 지급
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## ✅ 인수 조건 (Acceptance Criteria)
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+| Given                                    | When                                      | Then                                                              |
+|-----------------------------------------|-------------------------------------------|-------------------------------------------------------------------|
+| 사용자가 포인트 충전 버튼을 클릭했을 때    | 금액을 입력하고 결제했을 때                 | 포인트가 충전되어 예치금/리워드로 사용 가능                      |
+| 사용자가 스터디를 생성했을 때             | 참가자가 신청하면                          | 관리자가 승인하고 출석 관리 가능                                  |
+| 회차별 출석을 입력했을 때                  | 회차가 끝났을 때                            | 출석 결과가 누적되고 예치금에서 차감됨                            |
+| 사용자가 스터디 종료 버튼을 눌렀을 때     | 모든 회차가 끝났다면                        | 자동으로 정산되고 각자의 환급 금액이 표시됨                       |
+| 사용자가 내 스터디 상세 페이지를 열었을 때 | 참여자 목록을 조회하면                      | 각 참여자의 출석률, 예치금, 차감 금액이 표시됨                    |
+| 사용자가 모각공 방을 생성했을 때           | 다른 사용자가 참여하고 채널에 입장하면       | 실시간 채팅, 캠, 화면 공유 기능 사용 가능                         |
+| 사용자가 모각공 종료 버튼을 눌렀을 때       | 참여자들이 각자 미션 달성률을 입력하면       | 자동으로 순위를 매기고 1등에게 포인트 리워드 지급됨               |
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/a8883120-b626-48fe-b2aa-c0ccf2731afc) and click on Share -> Publish.
+## 🔧 기능 요구사항
 
-## Can I connect a custom domain to my Lovable project?
+### 📚 스터디 관리
 
-Yes, you can!
+- 스터디 생성, 회차 수 설정, 예치금 설정
+- 스터디 검색/참여 신청/승인
+- 출석 체크 (출석/지각/결석)
+- 회차별 출석 현황 기록 및 정산 내역 계산
+- 스터디 종료 → 자동 정산 → 환급 금액 표시
+- 참여자별 출석률 및 예치금 내역 조회
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### 🧑‍🤝‍🧑 모각공 기능
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- 모각공 방 생성/참여
+- 실시간 텍스트 채팅
+- 웹캠 영상 공유
+- 화면 공유 기능
+- 각자 미션 등록 및 달성률 입력
+- 모각공 종료 시 순위 산정 → 리워드 포인트 자동 지급
+
+### 💰 포인트 시스템
+
+- 포인트 충전 기능 (카드 결제 등)
+- 리워드 지급 및 예치금 환급
+- 포인트 환불/출금 가능 (현금화)
+
+---
+
+## 📌 핵심 가치 제안
+
+| 가치              | 설명                                                        |
+|-------------------|-------------------------------------------------------------|
+| **정산 자동화**     | 사람 간 정산 이슈 없이 공정하고 투명하게 자동 계산 가능             |
+| **실시간 협업**     | 캠/화면공유 기반 실시간 소통으로 혼자 공부할 때보다 더 집중 가능       |
+| **성과 기반 리워드** | 미션 기반 달성률 평가로 공정하고 강력한 동기부여 제공                 |
+| **관리 편의성**     | 스터디 생성/참여/승인/출석/정산까지 한번에 운영 가능                  |
+| **간편한 포인트 관리** | 충전/사용/환급 모두 한 곳에서 가능한 포인트 시스템 제공              |
+
+---
+
+## 🌐 프로토타입
+
+- URL: [https://studybank-prototype.lovable.app/](https://studybank-prototype.lovable.app/)  
+  *(모든 기능은 Mock 기반 프로토타입입니다)*
+
+---
+
+## 🛣 확장 방향 (추후 고도화)
+
+- 출석 자동 체크 (위치 기반 or 타이머 인증)  
+- 스터디별 자동 리마인더/알림 기능  
+- 포인트 커머스 연동 (스터디/교육 상품 구매 등)  
+- AI 기반 미션 검증 및 리워드 조정 시스템  
+- 시즌별 랭킹, 누적 출석률/성과 리포트 제공  
