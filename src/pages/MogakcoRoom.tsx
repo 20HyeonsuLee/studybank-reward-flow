@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Video, VideoOff, Mic, MicOff, Monitor, ScreenShare, MessageSquare, Users, ArrowLeft, Send, Trophy, Star } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Video, VideoOff, Mic, MicOff, Monitor, ScreenShare, MessageSquare, Users, ArrowLeft, Send, Trophy, Star, Target, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ChatMessage {
@@ -20,6 +22,15 @@ interface Participant {
   videoEnabled: boolean;
   audioEnabled: boolean;
   isScreenSharing: boolean;
+}
+
+interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  createdBy: string;
+  progress: Record<string, number>; // participantName -> progress percentage
+  completed: Record<string, boolean>; // participantName -> completion status
 }
 
 const MogakcoRoom = () => {
@@ -53,6 +64,21 @@ const MogakcoRoom = () => {
     { id: '3', name: '이코딩', videoEnabled: false, audioEnabled: true, isScreenSharing: false }
   ]);
 
+  // Mission-related states
+  const [missions, setMissions] = useState<Mission[]>([
+    {
+      id: '1',
+      title: '알고리즘 문제 3개 풀기',
+      description: '백준 또는 프로그래머스에서 알고리즘 문제 3개 해결',
+      createdBy: '김개발',
+      progress: { '나': 33, '김개발': 100, '이코딩': 67 },
+      completed: { '나': false, '김개발': true, '이코딩': false }
+    }
+  ]);
+  const [showMissions, setShowMissions] = useState(false);
+  const [newMission, setNewMission] = useState({ title: '', description: '' });
+  const [isAddingMission, setIsAddingMission] = useState(false);
+
   const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
   const [participantScores, setParticipantScores] = useState<Record<string, number>>({
     '나': 0,
@@ -83,8 +109,86 @@ const MogakcoRoom = () => {
     }));
   };
 
+  const addMission = () => {
+    if (!newMission.title.trim() || !newMission.description.trim()) {
+      toast({
+        title: "오류",
+        description: "미션 제목과 설명을 모두 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const mission: Mission = {
+      id: Date.now().toString(),
+      title: newMission.title,
+      description: newMission.description,
+      createdBy: '나',
+      progress: participants.reduce((acc, p) => ({ ...acc, [p.name]: 0 }), {}),
+      completed: participants.reduce((acc, p) => ({ ...acc, [p.name]: false }), {})
+    };
+
+    setMissions([...missions, mission]);
+    setNewMission({ title: '', description: '' });
+    setIsAddingMission(false);
+
+    toast({
+      title: "미션 추가 완료",
+      description: `"${mission.title}" 미션이 추가되었습니다.`,
+    });
+  };
+
+  const updateMissionProgress = (missionId: string, participant: string, progress: number) => {
+    setMissions(missions.map(mission => {
+      if (mission.id === missionId) {
+        const newCompleted = { ...mission.completed };
+        newCompleted[participant] = progress >= 100;
+        
+        return {
+          ...mission,
+          progress: { ...mission.progress, [participant]: Math.min(100, Math.max(0, progress)) },
+          completed: newCompleted
+        };
+      }
+      return mission;
+    }));
+  };
+
+  const calculateMissionRewards = () => {
+    const missionScores: Record<string, number> = {};
+    participants.forEach(p => { missionScores[p.name] = 0; });
+
+    missions.forEach(mission => {
+      const completedParticipants = Object.entries(mission.completed)
+        .filter(([_, completed]) => completed)
+        .map(([name, _]) => name);
+
+      if (completedParticipants.length > 0) {
+        // 완료한 사람들에게 점수 부여 (완료 순서대로 더 높은 점수)
+        const sortedByProgress = completedParticipants.sort((a, b) => 
+          mission.progress[b] - mission.progress[a]
+        );
+        
+        sortedByProgress.forEach((participant, index) => {
+          const points = Math.max(100 - (index * 20), 20);
+          missionScores[participant] += points;
+        });
+      }
+    });
+
+    return missionScores;
+  };
+
   const endMogakco = () => {
-    const sortedParticipants = Object.entries(participantScores)
+    const missionScores = calculateMissionRewards();
+    const finalScores = { ...participantScores };
+    
+    // 미션 점수를 최종 점수에 반영
+    Object.entries(missionScores).forEach(([name, score]) => {
+      finalScores[name] = (finalScores[name] || 0) + score;
+    });
+
+    const sortedParticipants = Object.entries(finalScores)
       .sort(([,a], [,b]) => b - a)
       .map(([name, score], index) => ({
         name,
@@ -96,7 +200,6 @@ const MogakcoRoom = () => {
     setHasEnded(true);
     setIsEndDialogOpen(true);
 
-    // 1등에게 리워드 지급
     const winner = sortedParticipants[0];
     if (winner.name === '나' && winner.reward > 0) {
       toast({
@@ -106,6 +209,7 @@ const MogakcoRoom = () => {
     }
 
     console.log('모각공 종료 - 순위:', sortedParticipants);
+    console.log('미션 점수:', missionScores);
   };
 
   const toggleVideo = () => {
@@ -172,6 +276,13 @@ const MogakcoRoom = () => {
             <Users className="w-5 h-5" />
             <span>{participants.length}명 참여중</span>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => setShowMissions(!showMissions)}
+          >
+            <Target className="w-4 h-4 mr-2" />
+            미션 관리
+          </Button>
           {!hasEnded && (
             <Button variant="destructive" onClick={() => setIsEndDialogOpen(true)}>
               모각공 종료
@@ -272,45 +383,199 @@ const MogakcoRoom = () => {
           </div>
         </div>
 
-        {/* 채팅 사이드바 */}
-        {isChatVisible && (
+        {/* 채팅/미션 사이드바 */}
+        {(isChatVisible || showMissions) && (
           <div className="w-80 bg-gray-800 border-l border-gray-700 flex flex-col">
-            <div className="p-4 border-b border-gray-700">
-              <h3 className="font-semibold">채팅</h3>
+            {/* 탭 헤더 */}
+            <div className="p-4 border-b border-gray-700 flex gap-2">
+              <Button
+                variant={isChatVisible && !showMissions ? "default" : "ghost"}
+                size="sm"
+                onClick={() => { setIsChatVisible(true); setShowMissions(false); }}
+              >
+                채팅
+              </Button>
+              <Button
+                variant={showMissions ? "default" : "ghost"}
+                size="sm"
+                onClick={() => { setShowMissions(true); setIsChatVisible(false); }}
+              >
+                미션
+              </Button>
             </div>
             
-            <div className="flex-1 p-4 overflow-y-auto space-y-3">
-              {chatMessages.map(msg => (
-                <div key={msg.id} className="space-y-1">
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <span className="font-medium">{msg.sender}</span>
-                    <span>{formatTime(msg.timestamp)}</span>
-                  </div>
-                  <div className="text-sm bg-gray-700 p-2 rounded">
-                    {msg.message}
+            {/* 채팅 영역 */}
+            {isChatVisible && !showMissions && (
+              <>
+                <div className="flex-1 p-4 overflow-y-auto space-y-3">
+                  {chatMessages.map(msg => (
+                    <div key={msg.id} className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <span className="font-medium">{msg.sender}</span>
+                        <span>{formatTime(msg.timestamp)}</span>
+                      </div>
+                      <div className="text-sm bg-gray-700 p-2 rounded">
+                        {msg.message}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={chatEndRef} />
+                </div>
+                
+                <div className="p-4 border-t border-gray-700">
+                  <div className="flex gap-2">
+                    <Input
+                      value={chatMessage}
+                      onChange={(e) => setChatMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                      placeholder="메시지를 입력하세요..."
+                      className="bg-gray-700 border-gray-600"
+                    />
+                    <Button onClick={sendMessage} size="sm">
+                      <Send className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-            
-            <div className="p-4 border-t border-gray-700">
-              <div className="flex gap-2">
-                <Input
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="메시지를 입력하세요..."
-                  className="bg-gray-700 border-gray-600"
-                />
-                <Button onClick={sendMessage} size="sm">
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+              </>
+            )}
+
+            {/* 미션 영역 */}
+            {showMissions && (
+              <>
+                <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">진행 중인 미션</h3>
+                    <Button
+                      size="sm"
+                      onClick={() => setIsAddingMission(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      추가
+                    </Button>
+                  </div>
+
+                  {missions.map(mission => (
+                    <Card key={mission.id} className="bg-gray-700 border-gray-600">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">{mission.title}</CardTitle>
+                        <p className="text-xs text-gray-400">{mission.description}</p>
+                        <p className="text-xs text-gray-500">작성자: {mission.createdBy}</p>
+                      </CardHeader>
+                      <CardContent className="pt-2">
+                        <div className="space-y-2">
+                          {participants.map(participant => (
+                            <div key={participant.name} className="flex items-center justify-between">
+                              <span className="text-sm">{participant.name}</span>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={mission.progress[participant.name] || 0}
+                                  onChange={(e) => updateMissionProgress(
+                                    mission.id, 
+                                    participant.name, 
+                                    parseInt(e.target.value) || 0
+                                  )}
+                                  className="w-16 h-6 text-xs bg-gray-600 border-gray-500"
+                                />
+                                <span className="text-xs">%</span>
+                                {mission.completed[participant.name] && (
+                                  <Badge variant="default" className="text-xs px-1">완료</Badge>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {/* 미션 추가 폼 */}
+                  {isAddingMission && (
+                    <Card className="bg-gray-700 border-gray-600">
+                      <CardContent className="p-4 space-y-3">
+                        <Input
+                          placeholder="미션 제목"
+                          value={newMission.title}
+                          onChange={(e) => setNewMission({...newMission, title: e.target.value})}
+                          className="bg-gray-600 border-gray-500"
+                        />
+                        <Input
+                          placeholder="미션 설명"
+                          value={newMission.description}
+                          onChange={(e) => setNewMission({...newMission, description: e.target.value})}
+                          className="bg-gray-600 border-gray-500"
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={addMission}>추가</Button>
+                          <Button size="sm" variant="ghost" onClick={() => setIsAddingMission(false)}>취소</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
+
+      {/* 종료 다이얼로그 */}
+      <Dialog open={isEndDialogOpen} onOpenChange={setIsEndDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-gray-800 text-white border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trophy className="w-5 h-5" />
+              모각공 결과
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-4">최종 순위</h3>
+              
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-center text-gray-300">순위</TableHead>
+                    <TableHead className="text-gray-300">참여자</TableHead>
+                    <TableHead className="text-center text-gray-300">점수</TableHead>
+                    <TableHead className="text-center text-gray-300">리워드</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(calculateMissionRewards())
+                    .map(([name, missionScore]) => ({
+                      name,
+                      totalScore: (participantScores[name] || 0) + missionScore
+                    }))
+                    .sort((a, b) => b.totalScore - a.totalScore)
+                    .map((participant, index) => (
+                      <TableRow key={participant.name}>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center">
+                            {index === 0 && <Star className="w-4 h-4 text-yellow-400 mr-1" />}
+                            {index + 1}등
+                          </div>
+                        </TableCell>
+                        <TableCell>{participant.name}</TableCell>
+                        <TableCell className="text-center">{participant.totalScore}점</TableCell>
+                        <TableCell className="text-center font-semibold text-green-400">
+                          {index === 0 ? '5,000원' : index === 1 ? '3,000원' : index === 2 ? '1,000원' : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            <Button onClick={leaveRoom} className="w-full">
+              나가기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
