@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import { Button } from '@/components/ui/button';
@@ -7,17 +6,19 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Users, Calendar, DollarSign, CheckSquare } from 'lucide-react';
+import { Plus, Users, Calendar, DollarSign, CheckSquare, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Study {
   id: string;
   title: string;
   participants: string[];
-  sessions: number;
+  totalSessions: number;
+  currentSession: number;
   depositAmount: number;
   status: 'active' | 'completed';
   attendanceRecords: Record<string, boolean[]>;
+  sessionDates: string[];
 }
 
 const StudyManagement = () => {
@@ -26,15 +27,17 @@ const StudyManagement = () => {
       id: '1',
       title: 'React 마스터 스터디',
       participants: ['김철수', '이영희', '박민수', '정지은'],
-      sessions: 8,
+      totalSessions: 8,
+      currentSession: 6,
       depositAmount: 100000,
       status: 'active',
       attendanceRecords: {
-        '김철수': [true, true, false, true, true, false, true, true],
-        '이영희': [true, true, true, true, false, true, true, true],
-        '박민수': [false, true, true, true, true, true, false, true],
-        '정지은': [true, false, true, true, true, true, true, false],
-      }
+        '김철수': [true, true, false, true, true, false],
+        '이영희': [true, true, true, true, false, true],
+        '박민수': [false, true, true, true, true, true],
+        '정지은': [true, false, true, true, true, true],
+      },
+      sessionDates: ['2024-07-01', '2024-07-08', '2024-07-15', '2024-07-22', '2024-07-29', '2024-08-05']
     }
   ]);
 
@@ -65,10 +68,12 @@ const StudyManagement = () => {
       id: Date.now().toString(),
       title: newStudyForm.title,
       participants,
-      sessions: parseInt(newStudyForm.sessions),
+      totalSessions: parseInt(newStudyForm.sessions),
+      currentSession: 0,
       depositAmount: parseInt(newStudyForm.depositAmount),
       status: 'active',
-      attendanceRecords: {}
+      attendanceRecords: {},
+      sessionDates: []
     };
 
     participants.forEach(participant => {
@@ -100,7 +105,7 @@ const StudyManagement = () => {
     const results = study.participants.map(participant => {
       const attendanceRecord = study.attendanceRecords[participant] || [];
       const attendedSessions = attendanceRecord.filter(Boolean).length;
-      const missedSessions = study.sessions - attendedSessions;
+      const missedSessions = study.totalSessions - attendedSessions;
       const penalty = missedSessions * 10000; // 결석 1회당 10,000원 벌금
       const refund = study.depositAmount - penalty;
       
@@ -132,6 +137,34 @@ const StudyManagement = () => {
     });
 
     console.log('정산 결과:', settlement);
+  };
+
+  const addSession = (studyId: string) => {
+    setStudies(studies.map(study => {
+      if (study.id === studyId && study.currentSession < study.totalSessions) {
+        const newSession = study.currentSession + 1;
+        const newDate = new Date();
+        newDate.setDate(newDate.getDate() + 7); // 다음 주
+        
+        const updatedAttendance = { ...study.attendanceRecords };
+        study.participants.forEach(participant => {
+          updatedAttendance[participant] = [...(updatedAttendance[participant] || []), false];
+        });
+
+        return {
+          ...study,
+          currentSession: newSession,
+          sessionDates: [...study.sessionDates, newDate.toISOString().split('T')[0]],
+          attendanceRecords: updatedAttendance
+        };
+      }
+      return study;
+    }));
+
+    toast({
+      title: "회차 추가 완료",
+      description: "새로운 회차가 추가되었습니다.",
+    });
   };
 
   return (
@@ -220,6 +253,15 @@ const StudyManagement = () => {
                   </CardTitle>
                   
                   <div className="flex gap-2">
+                    {study.status === 'active' && study.currentSession < study.totalSessions && (
+                      <Button
+                        variant="outline"
+                        onClick={() => addSession(study.id)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        회차 추가
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       onClick={() => setSelectedStudy(selectedStudy?.id === study.id ? null : study)}
@@ -246,7 +288,11 @@ const StudyManagement = () => {
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    {study.sessions}회차
+                    {study.currentSession}/{study.totalSessions}회차
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    진행률 {Math.round((study.currentSession / study.totalSessions) * 100)}%
                   </div>
                   <div className="flex items-center gap-1">
                     <DollarSign className="w-4 h-4" />
@@ -265,7 +311,7 @@ const StudyManagement = () => {
                         <TableHeader>
                           <TableRow>
                             <TableHead>참여자</TableHead>
-                            {Array.from({ length: study.sessions }, (_, i) => (
+                            {Array.from({ length: study.totalSessions }, (_, i) => (
                               <TableHead key={i} className="text-center">
                                 {i + 1}회
                               </TableHead>
@@ -278,8 +324,8 @@ const StudyManagement = () => {
                           {study.participants.map(participant => {
                             const attendanceRecord = study.attendanceRecords[participant] || [];
                             const attendedCount = attendanceRecord.filter(Boolean).length;
-                            const attendanceRate = Math.round((attendedCount / study.sessions) * 100);
-                            const missedSessions = study.sessions - attendedCount;
+                            const attendanceRate = Math.round((attendedCount / study.totalSessions) * 100);
+                            const missedSessions = study.totalSessions - attendedCount;
                             const penalty = missedSessions * 10000;
                             const refund = Math.max(0, study.depositAmount - penalty);
                             

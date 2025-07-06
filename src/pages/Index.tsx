@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from '../components/Header';
 import PointBalance from '../components/PointBalance';
@@ -6,7 +7,7 @@ import StudyCard from '../components/StudyCard';
 import MissionCard from '../components/MissionCard';
 import RecentActivity from '../components/RecentActivity';
 import { Button } from '@/components/ui/button';
-import { CheckSquare, Video } from 'lucide-react';
+import { CheckSquare, Video, Search } from 'lucide-react';
 
 const Index = () => {
   const mockStudies = [
@@ -73,6 +74,10 @@ const Index = () => {
           <Button onClick={() => window.location.href = '/study-management'} className="flex items-center gap-2">
             <CheckSquare className="w-4 h-4" />
             스터디 관리
+          </Button>
+          <Button onClick={() => window.location.href = '/study-search'} className="flex items-center gap-2">
+            <Search className="w-4 h-4" />
+            스터디 찾기
           </Button>
           <Button onClick={() => window.location.href = '/mogakco'} className="flex items-center gap-2">
             <Video className="w-4 h-4" />

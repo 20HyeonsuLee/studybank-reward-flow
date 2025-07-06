@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Video, VideoOff, Mic, MicOff, Monitor, ScreenShare, MessageSquare, Users, Settings, ArrowLeft, Send } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Video, VideoOff, Mic, MicOff, Monitor, ScreenShare, MessageSquare, Users, ArrowLeft, Send, Trophy, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ChatMessage {
@@ -52,6 +53,14 @@ const MogakcoRoom = () => {
     { id: '3', name: '이코딩', videoEnabled: false, audioEnabled: true, isScreenSharing: false }
   ]);
 
+  const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
+  const [participantScores, setParticipantScores] = useState<Record<string, number>>({
+    '나': 0,
+    '김개발': 0,
+    '이코딩': 0
+  });
+  const [hasEnded, setHasEnded] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +75,38 @@ const MogakcoRoom = () => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  const updateScore = (participantId: string, score: number) => {
+    setParticipantScores(prev => ({
+      ...prev,
+      [participantId]: score
+    }));
+  };
+
+  const endMogakco = () => {
+    const sortedParticipants = Object.entries(participantScores)
+      .sort(([,a], [,b]) => b - a)
+      .map(([name, score], index) => ({
+        name,
+        score,
+        rank: index + 1,
+        reward: index === 0 ? 5000 : index === 1 ? 3000 : index === 2 ? 1000 : 0
+      }));
+
+    setHasEnded(true);
+    setIsEndDialogOpen(true);
+
+    // 1등에게 리워드 지급
+    const winner = sortedParticipants[0];
+    if (winner.name === '나' && winner.reward > 0) {
+      toast({
+        title: "🎉 축하합니다!",
+        description: `1등으로 ${winner.reward.toLocaleString()}원의 리워드를 받았습니다!`,
+      });
+    }
+
+    console.log('모각공 종료 - 순위:', sortedParticipants);
+  };
 
   const toggleVideo = () => {
     setIsVideoOn(!isVideoOn);
@@ -126,9 +167,16 @@ const MogakcoRoom = () => {
           <h1 className="text-xl font-semibold">알고리즘 문제 해결 - 방 #{roomId}</h1>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5" />
-          <span>{participants.length}명 참여중</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            <span>{participants.length}명 참여중</span>
+          </div>
+          {!hasEnded && (
+            <Button variant="destructive" onClick={() => setIsEndDialogOpen(true)}>
+              모각공 종료
+            </Button>
+          )}
         </div>
       </div>
 
